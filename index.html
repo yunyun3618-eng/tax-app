@@ -66,7 +66,6 @@
         
         let currentData = null, isLock = true, sheetId = null;
 
-        // 💰 支払いチェック
         function checkLicense() {
             if (window.location.search.includes('paid=true') || localStorage.getItem('omni_paid') === 'done') {
                 localStorage.setItem('omni_paid', 'done');
@@ -91,11 +90,9 @@
             if (localStorage.getItem('kh_tok')) setupSheet();
         }
 
-        // 🔑 ログイン処理（アカウント選択を強制）
         function login() {
-            // URLから余計なパラメータを除去してリダイレクトURIを作成
             const redirectUri = window.location.origin + window.location.pathname;
-            // prompt=select_account を追加して毎回選ばせる
+            // 修正箇所：URLのつなぎを「&」に固定しました
             const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + 
                             `response_type=token&` +
                             `client_id=${CLIENT_ID}&` +
@@ -142,7 +139,6 @@
             }
         }
 
-        // --- 以下解析処理 ---
         async function autoCapture() {
             if (isLock || currentData) return;
             const v = document.getElementById('video'), c = document.getElementById('cap'), ctx = c.getContext('2d');

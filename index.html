@@ -70,9 +70,7 @@
                             <p id="res-date" class="font-mono text-sm text-slate-300 font-bold tracking-tighter">0000.00.00</p>
                         </div>
                     </div>
-
                     <div id="res-items" class="text-sm text-slate-300 space-y-1"></div>
-
                     <div class="bg-gradient-to-br from-blue-600/20 to-transparent rounded-[2.5rem] p-10 flex justify-between items-center border border-blue-500/20">
                         <span class="text-xs font-black text-blue-400 uppercase tracking-widest">Grand Total</span>
                         <span id="res-total" class="text-4xl font-black text-white tracking-tighter">¥0</span>
@@ -117,10 +115,10 @@
                 setInterval(autoCapture, 3000);
             } catch (e) { updateStatus("#ef4444", "CAMERA FAIL"); }
             checkHash();
-            if (localStorage.getItem('kh_tok')) setupSheet();
         }
 
         function login() {
+            // 現在開いているURLを自動取得（これがGoogle Cloud Consoleの許可リストと一致している必要があります）
             const redirectUri = window.location.origin + window.location.pathname;
             location.href = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(SCOPES)}&prompt=select_account`;
         }
@@ -132,6 +130,7 @@
                 localStorage.setItem('kh_tok', token); 
                 window.history.replaceState(null, null, window.location.pathname); 
             }
+            if (localStorage.getItem('kh_tok')) setupSheet();
         }
 
         async function setupSheet() {
@@ -142,6 +141,10 @@
                     headers: {'Authorization': `Bearer ${tok}`}
                 });
                 const data = await res.json();
+                
+                // 期限切れなどのエラー対応
+                if (data.error) { throw new Error(); }
+
                 if (data.files && data.files.length > 0) {
                     sheetId = data.files[0].id;
                 } else {
@@ -154,6 +157,7 @@
                     sheetId = newSheet.spreadsheetId;
                 }
                 
+                // ログインボタンを完全に削除し、スキャン可能にする
                 const btn = document.getElementById('login-btn');
                 if(btn) btn.remove();
                 
@@ -163,7 +167,8 @@
                 updateStatus("#22c55e", "CONNECTED");
                 isLock = false;
             } catch (e) { 
-                updateStatus("#ef4444", "AUTH ERROR");
+                localStorage.removeItem('kh_tok');
+                updateStatus("#ef4444", "AUTH EXPIRED");
             }
         }
 

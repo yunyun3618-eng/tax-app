@@ -8,7 +8,6 @@
     <style>
         body { background: #0f172a; color: #f8fafc; font-family: sans-serif; height: 100vh; overflow: hidden; }
         .glass { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); }
-        /* 💡 Safari対策：hiddenが付いたら跡形もなく消す */
         #lock-screen.hidden { display: none !important; pointer-events: none !important; visibility: hidden !important; opacity: 0 !important; }
         #lock-screen { position: absolute; inset: 0; z-index: 9999; background: #0f172a; display: flex; flex-direction: column; items: center; justify-content: center; text-align: center; padding: 20px; }
     </style>
@@ -27,14 +26,14 @@
 
     <div class="relative h-[40vh] bg-black">
         <video id="video" class="w-full h-full object-cover opacity-80" playsinline></video>
-        <div id="flash-overlay" class="absolute inset-0 pointer-events-none z-50"></div>
+        <div id="flash-overlay" class="absolute inset-0 pointer-events-none z-50 transition-opacity duration-300"></div>
     </div>
 
     <div class="flex-1 glass rounded-t-[30px] -mt-8 z-10 flex flex-col overflow-hidden">
         <div class="p-4 flex items-center gap-3 border-b border-white/5">
             <div id="status-icon" class="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">!</div>
             <p id="ai-msg" class="text-[11px] text-cyan-100 flex-1">Google連携ログインをしてください。</p>
-            <button onclick="login()" class="bg-blue-600 px-3 py-1 rounded-lg text-[10px] font-bold">LOGIN</button>
+            <button onclick="login()" class="bg-blue-600 px-3 py-1 rounded-lg text-[10px] font-bold uppercase">Login</button>
         </div>
 
         <div id="main-view" class="flex-1 overflow-y-auto p-4 space-y-4">
@@ -45,7 +44,7 @@
                 </div>
                 <div id="res-items" class="space-y-1 mb-3 text-[11px]"></div>
                 <div class="flex justify-between items-end border-t border-white/5 pt-2">
-                    <span class="text-[10px] opacity-50">TOTAL</span>
+                    <span class="text-[10px] opacity-50 font-bold uppercase">Total</span>
                     <span id="res-total" class="text-xl font-black text-cyan-400">¥0</span>
                 </div>
             </div>
@@ -63,12 +62,15 @@
         const API_KEY = 'AIzaSyBhRkqQT_H3E5H6pItF8_145QZjp1WThsc';
         const CLIENT_ID = '612247786122-mdjm4kcvhj2sjc6dj1h1k9sefou6h9o2.apps.googleusercontent.com';
         const FILE_NAME = '確定申告補助データ_OMNI';
+        const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+        
         let currentData = null, isLock = true, sheetId = null;
 
         function checkLicense() {
             if (window.location.search.includes('paid=true') || localStorage.getItem('omni_paid') === 'done') {
                 localStorage.setItem('omni_paid', 'done');
-                document.getElementById('lock-screen').classList.add('hidden');
+                const lock = document.getElementById('lock-screen');
+                if(lock) lock.classList.add('hidden');
                 return true;
             }
             return false;
@@ -86,6 +88,22 @@
             } catch (e) { console.error(e); }
             checkHash();
             if (localStorage.getItem('kh_tok')) setupSheet();
+        }
+
+        function login() {
+            // リダイレクトURIを「?」なしの純粋なものに整形
+            const redirectUri = location.origin + location.pathname;
+            // prompt=select_account を追加して毎回アカウントを選ばせる
+            location.href = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(SCOPES)}&prompt=select_account`;
+        }
+
+        function checkHash() {
+            const p = new URLSearchParams(location.hash.substring(1));
+            const t = p.get('access_token');
+            if(t) { 
+                localStorage.setItem('kh_tok', t); 
+                history.replaceState(null, null, location.pathname); 
+            }
         }
 
         async function setupSheet() {
@@ -126,8 +144,9 @@
 
         async function analyze(video) {
             isLock = true;
-            document.getElementById('flash-overlay').classList.add('bg-white');
-            setTimeout(() => document.getElementById('flash-overlay').classList.remove('bg-white'), 100);
+            const flash = document.getElementById('flash-overlay');
+            flash.style.opacity = '1'; flash.style.backgroundColor = 'white';
+            setTimeout(() => { flash.style.opacity = '0'; }, 100);
             updateStatus("🔍", "解析中...");
             const c = document.getElementById('cap'); c.width = video.videoWidth; c.height = video.videoHeight;
             c.getContext('2d').drawImage(video, 0, 0);
@@ -181,17 +200,6 @@
         function updateStatus(icon, msg) {
             document.getElementById('status-icon').innerText = icon;
             document.getElementById('ai-msg').innerText = msg;
-        }
-
-        function login() {
-            const red = encodeURIComponent(location.href.split('?')[0]);
-            location.href = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${CLIENT_ID}&redirect_uri=${red}&scope=https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file`;
-        }
-
-        function checkHash() {
-            const p = new URLSearchParams(location.hash.substring(1));
-            const t = p.get('access_token');
-            if(t) { localStorage.setItem('kh_tok', t); history.replaceState(null,null,location.pathname); }
         }
 
         window.onload = init;

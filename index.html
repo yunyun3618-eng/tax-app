@@ -69,24 +69,34 @@
         let currentData = null, isLock = true, sheetId = null;
 
         async function init() {
-            // ライセンスチェック
+            // 💰 ライセンスチェック（ここが重要！）
             checkLicense();
 
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            document.getElementById('video').srcObject = stream;
-            document.getElementById('video').play();
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                document.getElementById('video').srcObject = stream;
+                document.getElementById('video').play();
+            } catch (err) {
+                console.error("Camera error:", err);
+            }
+
             checkHash();
             if (localStorage.getItem('kh_tok')) setupSheet();
         }
 
         function checkLicense() {
-            // URLに paid=true があるか、保存済みかを確認
+            // 1. URLに paid=true が含まれているか（決済直後の判断）
             if (window.location.search.includes('paid=true')) {
                 localStorage.setItem('omni_pro_paid', 'true');
+                // URLを綺麗にする
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
             
-            if (localStorage.getItem('omni_pro_paid') !== 'true') {
+            // 2. スマホ内に「支払い済み」の記録があるか
+            if (localStorage.getItem('omni_pro_paid') === 'true') {
+                document.getElementById('lock-screen').classList.add('hidden');
+                console.log("License active.");
+            } else {
                 document.getElementById('lock-screen').classList.remove('hidden');
             }
         }
@@ -174,6 +184,7 @@
         }
 
         async function saveToSheet() {
+            // 二重チェック
             if (localStorage.getItem('omni_pro_paid') !== 'true') {
                 window.location.href = STRIPE_URL;
                 return;

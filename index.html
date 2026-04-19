@@ -69,33 +69,23 @@
         let currentData = null, isLock = true, sheetId = null;
 
         async function init() {
-            // 💰 ライセンスチェック（ここが重要！）
             checkLicense();
-
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 document.getElementById('video').srcObject = stream;
                 document.getElementById('video').play();
-            } catch (err) {
-                console.error("Camera error:", err);
-            }
-
+            } catch (err) { console.error(err); }
             checkHash();
             if (localStorage.getItem('kh_tok')) setupSheet();
         }
 
         function checkLicense() {
-            // 1. URLに paid=true が含まれているか（決済直後の判断）
             if (window.location.search.includes('paid=true')) {
                 localStorage.setItem('omni_pro_paid', 'true');
-                // URLを綺麗にする
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
-            
-            // 2. スマホ内に「支払い済み」の記録があるか
             if (localStorage.getItem('omni_pro_paid') === 'true') {
                 document.getElementById('lock-screen').classList.add('hidden');
-                console.log("License active.");
             } else {
                 document.getElementById('lock-screen').classList.remove('hidden');
             }
@@ -111,9 +101,9 @@
                 const data = await res.json();
                 if (data.files && data.files.length > 0) {
                     sheetId = data.files[0].id;
-                    updateStatus("✅ Ready", "準備完了！レシートをかざしてください。");
+                    updateStatus("✅ Ready", "準備完了！");
                 } else {
-                    updateStatus("✨ Create", "専用シートを自動作成中...");
+                    updateStatus("✨ Create", "シート作成中...");
                     const createRes = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
                         method: 'POST',
                         headers: {'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json'},
@@ -126,13 +116,11 @@
                         headers: {'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json'},
                         body: JSON.stringify({ values: [['日付', '店名', '項目', '金額']] })
                     });
-                    updateStatus("✅ Ready", "シート作成完了！レシートをどうぞ。");
+                    updateStatus("✅ Ready", "シート作成完了！");
                 }
                 isLock = false;
                 setInterval(autoCapture, 3000);
-            } catch (e) {
-                updateStatus("❌ Error", "Google認証切れ。ログインし直してください。");
-            }
+            } catch (e) { updateStatus("❌ Error", "再ログインしてください。"); }
         }
 
         async function autoCapture() {
@@ -168,7 +156,7 @@
                 const text = json.candidates[0].content.parts[0].text.replace(/```json|```/g, '');
                 currentData = JSON.parse(text);
                 render(currentData);
-            } catch (e) { updateStatus("❌ Error", "解析失敗。再度かざしてください。"); isLock = false; }
+            } catch (e) { updateStatus("❌ Error", "解析失敗。"); isLock = false; }
         }
 
         function render(data) {
@@ -180,11 +168,10 @@
             const container = document.getElementById('res-items');
             container.innerHTML = data.items.map(it => `<div class="flex justify-between"><span>${it.category}</span><span class="font-mono">¥${it.amount.toLocaleString()}</span></div>`).join('');
             document.getElementById('save-btn').disabled = false;
-            updateStatus("✨ OK", "内容を確認して保存してください。");
+            updateStatus("✨ OK", "保存してください。");
         }
 
         async function saveToSheet() {
-            // 二重チェック
             if (localStorage.getItem('omni_pro_paid') !== 'true') {
                 window.location.href = STRIPE_URL;
                 return;

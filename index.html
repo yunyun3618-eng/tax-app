@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OMNI PRO - Final Execution</title>
+    <title>OMNI PRO - 確定申告補助</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #020617; color: #f8fafc; font-family: -apple-system, sans-serif; height: 100vh; overflow: hidden; }
@@ -11,78 +11,63 @@
         #lock-screen { position: fixed; inset: 0; z-index: 9999; background: #020617; display: flex; flex-direction: column; items: center; justify-content: center; padding: 2rem; }
         #lock-screen.hidden { display: none !important; }
         .status-pill { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        .item-row { display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        /* レシート用の縦長フレーム */
+        .receipt-guide { width: 80%; height: 75%; border: 2px solid rgba(59, 130, 246, 0.5); border-radius: 1.5rem; position: relative; }
+        .corner { position: absolute; width: 20px; height: 20px; border: 4px solid #3b82f6; }
     </style>
 </head>
 <body class="flex flex-col">
 
     <div id="lock-screen">
-        <div class="w-20 h-20 bg-blue-600 rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl shadow-blue-500/30 text-4xl">💳</div>
-        <h2 class="text-2xl font-black mb-2 tracking-tight">OMNI PRO</h2>
-        <p class="text-slate-400 text-sm mb-12 text-center px-6 font-medium uppercase tracking-widest">Authentication Required</p>
-        <a href="https://buy.stripe.com/test_fZu00cclwe2Cd4s6ha8bS00" class="w-full max-w-xs bg-white text-black font-black py-5 rounded-2xl text-center shadow-xl active:scale-95 transition-transform">UNLOCK ACCESS</a>
+        <div class="w-20 h-20 bg-blue-600 rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl text-4xl">💳</div>
+        <h2 class="text-2xl font-black mb-12">OMNI PRO</h2>
+        <a href="https://buy.stripe.com/test_fZu00cclwe2Cd4s6ha8bS00" class="w-full max-w-xs bg-white text-black font-black py-5 rounded-2xl text-center shadow-xl">アクセスを解除</a>
     </div>
 
-    <div class="relative h-[42vh] bg-black">
+    <div class="relative h-[55vh] bg-black">
         <video id="video" class="w-full h-full object-cover" playsinline></video>
         <div id="flash-overlay" class="absolute inset-0 pointer-events-none z-50 transition-opacity duration-200"></div>
         
         <div class="absolute top-0 left-0 right-0 p-5 flex justify-between items-start z-20">
             <div class="status-pill px-4 py-2 rounded-full flex items-center gap-3">
                 <div id="status-dot" class="w-2.5 h-2.5 rounded-full bg-slate-600"></div>
-                <span id="ai-msg" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 italic">Offline</span>
+                <span id="ai-msg" class="text-[10px] font-black uppercase tracking-widest text-slate-300">オフライン</span>
             </div>
-            <button id="login-btn" onclick="login()" class="bg-blue-600 text-white px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-transform">Login</button>
+            <button id="login-btn" onclick="login()" class="bg-blue-600 text-white px-8 py-3 rounded-full text-[12px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Google連携</button>
         </div>
 
         <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div class="w-72 h-56 border border-white/10 rounded-[2rem] relative">
-                <div class="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-blue-500 rounded-tl-xl"></div>
-                <div class="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-blue-500 rounded-tr-xl"></div>
-                <div class="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-blue-500 rounded-bl-xl"></div>
-                <div class="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-blue-500 rounded-br-xl"></div>
+            <div class="receipt-guide">
+                <div class="corner -top-1 -left-1 border-r-0 border-b-0 rounded-tl-lg"></div>
+                <div class="corner -top-1 -right-1 border-l-0 border-b-0 rounded-tr-lg"></div>
+                <div class="corner -bottom-1 -left-1 border-r-0 border-t-0 rounded-bl-lg"></div>
+                <div class="corner -bottom-1 -right-1 border-l-0 border-t-0 rounded-br-lg"></div>
             </div>
         </div>
     </div>
 
-    <div class="flex-1 glass-panel rounded-t-[48px] -mt-12 z-10 flex flex-col shadow-2xl border-t border-white/5">
-        <div id="panel-scroll" class="flex-1 overflow-y-auto px-10 pt-14 pb-6">
-            
-            <div id="ui-standby" class="text-center space-y-4 py-10">
-                <div id="main-icon" class="text-6xl opacity-10 mb-8">🧾</div>
-                <p id="main-hint" class="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Authorize Cloud Connection</p>
+    <div class="flex-1 glass-panel rounded-t-[40px] -mt-8 z-10 flex flex-col shadow-2xl">
+        <div id="panel-scroll" class="flex-1 overflow-y-auto px-8 pt-10 pb-4">
+            <div id="ui-standby" class="text-center py-6">
+                <p id="main-hint" class="text-slate-400 text-xs font-bold tracking-widest">Google連携を完了させてください</p>
             </div>
-
-            <div id="ui-scanning" class="hidden text-center py-10 space-y-6">
-                <div class="inline-block w-12 h-12 border-[3px] border-blue-500/10 border-t-blue-500 rounded-full animate-spin"></div>
-                <p class="text-blue-400 text-[11px] font-black uppercase tracking-[0.4em] animate-pulse">Analyzing OCR</p>
+            <div id="ui-scanning" class="hidden text-center py-6 space-y-4">
+                <div class="inline-block w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+                <p class="text-blue-400 text-xs font-bold tracking-widest animate-pulse">レシートを解析中...</p>
             </div>
-
-            <div id="ui-result" class="hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
-                <div class="space-y-8">
-                    <div class="flex justify-between items-start border-b border-white/10 pb-8">
-                        <div class="space-y-2">
-                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Store / Branch</p>
-                            <h3 id="res-shop" class="text-2xl font-bold text-white tracking-tighter leading-none">---</h3>
-                        </div>
-                        <div class="text-right space-y-2">
-                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Date</p>
-                            <p id="res-date" class="font-mono text-sm text-slate-300 font-bold tracking-tighter">0000.00.00</p>
-                        </div>
-                    </div>
-                    <div id="res-items" class="text-sm text-slate-300 space-y-1"></div>
-                    <div class="bg-gradient-to-br from-blue-600/20 to-transparent rounded-[2.5rem] p-10 flex justify-between items-center border border-blue-500/20">
-                        <span class="text-xs font-black text-blue-400 uppercase tracking-widest">Grand Total</span>
-                        <span id="res-total" class="text-4xl font-black text-white tracking-tighter">¥0</span>
-                    </div>
+            <div id="ui-result" class="hidden space-y-6">
+                <div class="flex justify-between items-end border-b border-white/10 pb-4">
+                    <div><p class="text-[10px] text-slate-500 font-bold">店名</p><h3 id="res-shop" class="text-xl font-bold text-white">---</h3></div>
+                    <div class="text-right"><p id="res-date" class="font-mono text-sm text-slate-400">0000/00/00</p></div>
+                </div>
+                <div class="bg-blue-600/10 rounded-3xl p-6 flex justify-between items-center border border-blue-500/20">
+                    <span class="text-xs font-bold text-blue-400">合計金額</span>
+                    <span id="res-total" class="text-3xl font-black text-white">¥0</span>
                 </div>
             </div>
         </div>
-
-        <div class="p-10 pb-14">
-            <button id="save-btn" onclick="saveToSheet()" class="w-full bg-blue-600 h-20 rounded-[28px] flex items-center justify-center shadow-2xl shadow-blue-900/40 font-black text-xl text-white disabled:opacity-0 disabled:pointer-events-none transition-all active:scale-[0.97]" disabled>
-                SAVE TO SHEET
-            </button>
+        <div class="p-8 pb-10">
+            <button id="save-btn" onclick="saveToSheet()" class="w-full bg-blue-600 h-16 rounded-2xl font-black text-lg text-white disabled:hidden shadow-xl active:scale-95 transition-all" disabled>スプレッドシートに保存</button>
         </div>
     </div>
 
@@ -96,29 +81,21 @@
         
         let currentData = null, isLock = true, sheetId = null;
 
-        function checkLicense() {
+        async function init() {
             if (window.location.search.includes('paid=true') || localStorage.getItem('omni_paid') === 'done') {
                 localStorage.setItem('omni_paid', 'done');
                 document.getElementById('lock-screen').classList.add('hidden');
-                return true;
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    document.getElementById('video').srcObject = stream;
+                    await document.getElementById('video').play();
+                    setInterval(autoCapture, 3000);
+                } catch (e) { updateStatus("#ef4444", "カメラ起動失敗"); }
+                checkHash();
             }
-            return false;
-        }
-
-        async function init() {
-            if (!checkLicense()) return;
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                const v = document.getElementById('video');
-                v.srcObject = stream;
-                await v.play();
-                setInterval(autoCapture, 3000);
-            } catch (e) { updateStatus("#ef4444", "CAMERA FAIL"); }
-            checkHash();
         }
 
         function login() {
-            // 現在開いているURLを自動取得（これがGoogle Cloud Consoleの許可リストと一致している必要があります）
             const redirectUri = window.location.origin + window.location.pathname;
             location.href = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(SCOPES)}&prompt=select_account`;
         }
@@ -128,22 +105,20 @@
             const token = params.get('access_token');
             if(token) { 
                 localStorage.setItem('kh_tok', token); 
-                window.history.replaceState(null, null, window.location.pathname); 
+                window.history.replaceState(null, null, window.location.pathname);
             }
             if (localStorage.getItem('kh_tok')) setupSheet();
         }
 
         async function setupSheet() {
             const tok = localStorage.getItem('kh_tok');
-            updateStatus("#3b82f6", "LINKING...");
+            updateStatus("#3b82f6", "接続中...");
             try {
                 const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and trashed=false`, {
                     headers: {'Authorization': `Bearer ${tok}`}
                 });
                 const data = await res.json();
-                
-                // 期限切れなどのエラー対応
-                if (data.error) { throw new Error(); }
+                if (data.error) throw new Error();
 
                 if (data.files && data.files.length > 0) {
                     sheetId = data.files[0].id;
@@ -157,18 +132,15 @@
                     sheetId = newSheet.spreadsheetId;
                 }
                 
-                // ログインボタンを完全に削除し、スキャン可能にする
-                const btn = document.getElementById('login-btn');
-                if(btn) btn.remove();
-                
-                document.getElementById('main-icon').classList.add('animate-pulse');
-                document.getElementById('main-icon').style.opacity = "0.5";
-                document.getElementById('main-hint').innerText = "Ready to Scan";
-                updateStatus("#22c55e", "CONNECTED");
+                // 成功したらログインボタンを消す
+                document.getElementById('login-btn').classList.add('hidden');
+                document.getElementById('main-hint').innerText = "レシートを枠内にかざしてください";
+                updateStatus("#22c55e", "接続済み");
                 isLock = false;
             } catch (e) { 
                 localStorage.removeItem('kh_tok');
-                updateStatus("#ef4444", "AUTH EXPIRED");
+                updateStatus("#ef4444", "連携が必要です");
+                isLock = true;
             }
         }
 
@@ -178,8 +150,8 @@
             c.width = 100; c.height = 100;
             ctx.drawImage(v, 0, 0, 100, 100);
             const pix = ctx.getImageData(0,0,100,100).data;
-            let w = 0; for(let i=0; i<pix.length; i+=4) if(pix[i]>215 && pix[i+1]>215 && pix[i+2]>215) w++;
-            if (w > 1600) analyze(v);
+            let w = 0; for(let i=0; i<pix.length; i+=4) if(pix[i]>200 && pix[i+1]>200 && pix[i+2]>200) w++;
+            if (w > 1500) analyze(v);
         }
 
         async function analyze(video) {
@@ -187,11 +159,7 @@
             document.getElementById('ui-standby').classList.add('hidden');
             document.getElementById('ui-result').classList.add('hidden');
             document.getElementById('ui-scanning').classList.remove('hidden');
-            
-            const flash = document.getElementById('flash-overlay');
-            flash.style.opacity = '1'; flash.style.backgroundColor = 'white';
-            setTimeout(() => flash.style.opacity = '0', 200);
-            updateStatus("#f59e0b", "AI PROCESSING");
+            updateStatus("#f59e0b", "解析中");
             
             const c = document.getElementById('cap'); c.width = video.videoWidth; c.height = video.videoHeight;
             c.getContext('2d').drawImage(video, 0, 0);
@@ -202,7 +170,7 @@
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ contents: [{ parts: [
-                        { text: "Extract receipt info as JSON strictly: {shop:'', date:'', total:0, items:[{category:'', amount:0}]}" },
+                        { text: "Extract receipt info as JSON strictly in Japanese: {shop:'', date:'', total:0, items:[{category:'', amount:0}]}" },
                         { inline_data: { mime_type: "image/jpeg", data: base64 } }
                     ]}]})
                 });
@@ -212,30 +180,23 @@
                 
                 document.getElementById('ui-scanning').classList.add('hidden');
                 document.getElementById('ui-result').classList.remove('hidden');
-                document.getElementById('res-shop').innerText = currentData.shop || 'Unknown Merchant';
-                document.getElementById('res-date').innerText = currentData.date || '----.--.--';
+                document.getElementById('res-shop').innerText = currentData.shop || '不明な店舗';
+                document.getElementById('res-date').innerText = currentData.date || '----/--/--';
                 document.getElementById('res-total').innerText = `¥${(currentData.total || 0).toLocaleString()}`;
-                document.getElementById('res-items').innerHTML = (currentData.items || []).map(it => `
-                    <div class="item-row">
-                        <span class="text-slate-400 font-bold tracking-tight">${it.category}</span>
-                        <span class="font-mono font-black text-white">¥${it.amount.toLocaleString()}</span>
-                    </div>
-                `).join('');
                 document.getElementById('save-btn').disabled = false;
-                updateStatus("#3b82f6", "VERIFY DATA");
+                updateStatus("#3b82f6", "確認してください");
             } catch (e) { 
                 isLock = false; 
                 document.getElementById('ui-scanning').classList.add('hidden');
                 document.getElementById('ui-standby').classList.remove('hidden');
+                updateStatus("#22c55e", "再試行可能");
             }
         }
 
         async function saveToSheet() {
             const tok = localStorage.getItem('kh_tok');
-            if(!sheetId || !tok || !currentData) return;
             const btn = document.getElementById('save-btn');
-            btn.disabled = true;
-            btn.innerText = "WRITING...";
+            btn.innerText = "保存中..."; btn.disabled = true;
             
             const values = currentData.items.map(it => [currentData.date, currentData.shop, it.category, it.amount]);
             try {
@@ -244,21 +205,15 @@
                     headers: {'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json'},
                     body: JSON.stringify({values})
                 });
-                updateStatus("#22c55e", "SAVED SUCCESS");
-                btn.innerText = "COMPLETED";
+                btn.innerText = "保存完了！";
                 setTimeout(() => {
                     currentData = null;
                     document.getElementById('ui-result').classList.add('hidden');
                     document.getElementById('ui-standby').classList.remove('hidden');
-                    btn.innerText = "SAVE TO SHEET";
-                    updateStatus("#22c55e", "CONNECTED");
+                    btn.innerText = "スプレッドシートに保存";
                     isLock = false;
                 }, 1500);
-            } catch (e) { 
-                updateStatus("#ef4444", "FILE ERROR");
-                btn.innerText = "RETRY";
-                btn.disabled = false;
-            }
+            } catch (e) { btn.disabled = false; btn.innerText = "再試行"; }
         }
 
         function updateStatus(color, msg) {

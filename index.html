@@ -3,16 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>kakutei-hojo OMNI v2</title>
+    <title>kakutei-hojo OMNI PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #0f172a; color: #f8fafc; font-family: sans-serif; height: 100vh; overflow: hidden; }
         .glass { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); }
         .shutter-flash { animation: flash 0.3s ease-out; }
         @keyframes flash { 0% { background: white; opacity: 1; } 100% { background: transparent; opacity: 0; } }
+        #lock-screen { position: absolute; inset: 0; z-index: 100; background: rgba(15, 23, 42, 0.98); display: flex; flex-direction: column; items-center; justify-content: center; text-align: center; padding: 20px; }
     </style>
 </head>
 <body class="flex flex-col">
+
+    <div id="lock-screen" class="hidden">
+        <div class="mb-6 text-6xl">💳</div>
+        <h2 class="text-2xl font-bold mb-4">OMNI PRO ライセンス</h2>
+        <p class="text-sm text-slate-400 mb-10 leading-relaxed">この機能はプロ版限定です。<br>利用権を購入して、AI解析と<br>スプレッドシート自動保存を解禁しましょう。</p>
+        <a href="https://buy.stripe.com/test_fZu00cclwe2Cd4s6ha8bS00" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-5 px-10 rounded-2xl shadow-2xl transition-all transform active:scale-95">
+            今すぐ利用権を購入
+        </a>
+        <button onclick="location.reload()" class="mt-8 text-xs text-slate-500 underline decoration-slate-700">購入後にここを押して再読み込み</button>
+    </div>
 
     <div class="relative h-[40vh] bg-black">
         <video id="video" class="w-full h-full object-cover opacity-80" playsinline></video>
@@ -26,8 +37,8 @@
             <button onclick="login()" class="bg-blue-600 px-3 py-1 rounded-lg text-[10px] font-bold">LOGIN</button>
         </div>
 
-        <div id="main-view" class="flex-1 overflow-y-auto p-4 space-y-4">
-            <div id="res-card" class="hidden p-4 rounded-2xl bg-cyan-900/20 border border-cyan-500/30">
+        <div id="main-view" class="flex-1 overflow-y-auto p-4 space-y-4 text-center">
+            <div id="res-card" class="hidden p-4 rounded-2xl bg-cyan-900/20 border border-cyan-500/30 text-left">
                 <div class="flex justify-between items-start border-b border-white/5 pb-2 mb-2">
                     <h3 id="res-shop" class="font-bold text-sm">解析中...</h3>
                     <span id="res-date" class="text-[10px] opacity-50 font-mono"></span>
@@ -38,6 +49,7 @@
                     <span id="res-total" class="text-xl font-black text-cyan-400">¥0</span>
                 </div>
             </div>
+            <p id="hint-msg" class="text-slate-500 text-[10px] mt-10">カメラにレシートをかざすと自動で解析します</p>
         </div>
 
         <div class="p-6 pb-10 bg-slate-900/80">
@@ -52,10 +64,14 @@
         const CLIENT_ID = '612247786122-mdjm4kcvhj2sjc6dj1h1k9sefou6h9o2.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
         const FILE_NAME = '確定申告補助データ_OMNI';
-
+        const STRIPE_URL = 'https://buy.stripe.com/test_fZu00cclwe2Cd4s6ha8bS00';
+        
         let currentData = null, isLock = true, sheetId = null;
 
         async function init() {
+            // ライセンスチェック
+            checkLicense();
+
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
             document.getElementById('video').srcObject = stream;
             document.getElementById('video').play();
@@ -63,23 +79,30 @@
             if (localStorage.getItem('kh_tok')) setupSheet();
         }
 
-        // スプシを探す or 作る
+        function checkLicense() {
+            // URLに paid=true があるか、保存済みかを確認
+            if (window.location.search.includes('paid=true')) {
+                localStorage.setItem('omni_pro_paid', 'true');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
+            if (localStorage.getItem('omni_pro_paid') !== 'true') {
+                document.getElementById('lock-screen').classList.remove('hidden');
+            }
+        }
+
         async function setupSheet() {
             const tok = localStorage.getItem('kh_tok');
             updateStatus("🔧 連携中...", "シートを確認しています...");
-
             try {
-                // 1. ファイル検索
                 const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and trashed=false`, {
                     headers: {'Authorization': `Bearer ${tok}`}
                 });
                 const data = await res.json();
-
                 if (data.files && data.files.length > 0) {
                     sheetId = data.files[0].id;
                     updateStatus("✅ Ready", "準備完了！レシートをかざしてください。");
                 } else {
-                    // 2. なければ新規作成
                     updateStatus("✨ Create", "専用シートを自動作成中...");
                     const createRes = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
                         method: 'POST',
@@ -88,8 +111,6 @@
                     });
                     const newSheet = await createRes.json();
                     sheetId = newSheet.spreadsheetId;
-
-                    // 3. 見出しを追加
                     await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A1:append?valueInputOption=USER_ENTERED`, {
                         method: 'POST',
                         headers: {'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json'},
@@ -100,7 +121,7 @@
                 isLock = false;
                 setInterval(autoCapture, 3000);
             } catch (e) {
-                updateStatus("❌ Error", "Google認証が切れました。再ログインしてください。");
+                updateStatus("❌ Error", "Google認証切れ。ログインし直してください。");
             }
         }
 
@@ -119,11 +140,9 @@
             document.getElementById('flash-overlay').classList.add('shutter-flash');
             setTimeout(()=>document.getElementById('flash-overlay').classList.remove('shutter-flash'), 300);
             updateStatus("🔍 Scan", "Geminiが解析中...");
-
             const c = document.getElementById('cap'); c.width = video.videoWidth; c.height = video.videoHeight;
             c.getContext('2d').drawImage(video, 0, 0);
             const base64 = c.toDataURL('image/jpeg', 0.8).split(',')[1];
-
             try {
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                     method: 'POST',
@@ -144,6 +163,7 @@
 
         function render(data) {
             document.getElementById('res-card').classList.remove('hidden');
+            document.getElementById('hint-msg').classList.add('hidden');
             document.getElementById('res-shop').innerText = data.shop;
             document.getElementById('res-date').innerText = data.date;
             document.getElementById('res-total').innerText = `¥${data.total.toLocaleString()}`;
@@ -154,21 +174,24 @@
         }
 
         async function saveToSheet() {
+            if (localStorage.getItem('omni_pro_paid') !== 'true') {
+                window.location.href = STRIPE_URL;
+                return;
+            }
             const tok = localStorage.getItem('kh_tok');
             if(!sheetId || !tok || !currentData) return;
-
             updateStatus("💾 Saving", "送信中...");
             const values = currentData.items.map(it => [currentData.date, currentData.shop, it.category, it.amount]);
-
             try {
                 await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A1:append?valueInputOption=USER_ENTERED`, {
                     method: 'POST',
                     headers: {'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json'},
                     body: JSON.stringify({values})
                 });
-                updateStatus("✅ Done", "保存しました！次のレシートをどうぞ。");
+                updateStatus("✅ Done", "保存しました！");
                 currentData = null;
                 document.getElementById('res-card').classList.add('hidden');
+                document.getElementById('hint-msg').classList.remove('hidden');
                 document.getElementById('save-btn').disabled = true;
                 isLock = false;
             } catch (e) { updateStatus("❌ Error", "保存失敗。"); }
